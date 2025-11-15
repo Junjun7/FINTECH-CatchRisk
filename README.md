@@ -201,16 +201,20 @@ python -m http.server 8080 --directory frontend
 ```
 CatchRisk_Demo/
 ├── frontend/
-│   ├── index.html          # 前端主页面
-│   └── ...
+│   └── index.html          # 前端主页面
 ├── backend/
 │   ├── main.py             # FastAPI 主程序
 │   ├── requirements.txt     # 依赖配置
 │   ├── check_import.py      # 导入检查
-│   └── test_backend.py      # 单元测试
+│   ├── test_backend.py      # 单元测试
+│   └── test_backend2.py     # 单元测试2
+├── 测试合同/               # 测试合同文件夹
 ├── .env                    # 环境配置文件
-├── README.md               # 本文件
-└── run.sh / .bat      # 启动脚本
+├── 1_run.bat               # Windows启动脚本
+├── 1_run.sh                # Unix/Mac启动脚本
+├── 2_index.html.lnk        # 前端快捷方式
+├── 快速启动方法.txt        # 快速启动说明
+└── README.md               # 本文件
 ```
 
 ---
@@ -397,16 +401,20 @@ Then visit: `http://localhost:8080`
 ```
 CatchRisk_Demo/
 ├── frontend/
-│   ├── index.html          # Frontend main page
-│   └── ...
+│   └── index.html          # Frontend main page
 ├── backend/
 │   ├── main.py             # FastAPI main program
 │   ├── requirements.txt     # Dependency configuration
 │   ├── check_import.py      # Import check
-│   └── test_backend.py      # Unit tests
+│   ├── test_backend.py      # Unit tests
+│   └── test_backend2.py     # Unit tests 2
+├── 测试合同/               # Test contracts folder
 ├── .env                    # Environment configuration
-├── README.md               # This file
-└── run.sh / .bat      # Startup scripts
+├── 1_run.bat               # Windows startup script
+├── 1_run.sh                # Unix/Mac startup script
+├── 2_index.html.lnk        # Frontend shortcut
+├── 快速启动方法.txt        # Quick start guide
+└── README.md               # This file
 ```
 
 ---
