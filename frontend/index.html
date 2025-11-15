@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>CatchRisk · 合同票据智能审核系统</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft Yahei", sans-serif; }
+    body { background: #050816; color: #f5f5f5; }
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 16px 32px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between; background: radial-gradient(circle at top left, #1f3bff, #050816 55%); }
+    header .title { font-size: 20px; font-weight: 600; }
+    header .subtitle { font-size: 12px; opacity: 0.8; }
+    .layout { flex: 1; display: flex; min-height: 0; }
+    aside { width: 220px; padding: 16px; border-right: 1px solid rgba(255, 255, 255, 0.08); background: linear-gradient(180deg, rgba(19, 33, 78, 0.9), rgba(5, 8, 22, 1)); display: flex; flex-direction: column; }
+    .nav-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px; }
+    .nav-list { list-style: none; margin-bottom: 24px; }
+    .nav-item { padding: 8px 10px; margin-bottom: 4px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s, transform 0.1s; color: rgba(255, 255, 255, 0.9); }
+    .nav-item span.icon { font-size: 16px; opacity: 0.9; }
+    .nav-item.active, .nav-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
+    main { flex: 1; padding: 20px 28px; overflow-y: auto; }
+    .section { display: none; max-width: 1100px; margin: 0 auto; }
+    .section.active { display: block; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-title { font-size: 18px; font-weight: 600; }
+    .section-desc { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+    .tag { font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25); opacity: 0.9; }
+    .card { background: rgba(8, 13, 40, 0.98); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.06); padding: 16px 18px; box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5); margin-bottom: 20px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .card-title { font-size: 15px; font-weight: 500; }
+    .card-subtitle { font-size: 12px; opacity: 0.7; }
+    .upload-area { border: 1px dashed rgba(255, 255, 255, 0.4); border-radius: 10px; padding: 24px; text-align: center; margin-top: 10px; background: radial-gradient(circle at top, rgba(66, 135, 255, 0.2), rgba(8, 13, 40, 0.95)); transition: box-shadow 0.15s ease, border-color 0.15s ease; }
+    .upload-area.dragover { border-color: #4c6fff; box-shadow: 0 6px 18px rgba(76, 111, 255, 0.12); }
+    .upload-title { font-size: 16px; margin-bottom: 8px; }
+    .upload-desc { font-size: 13px; opacity: 0.8; margin-bottom: 16px; }
+    .status-inline { display: inline-flex; align-items: center; gap: 8px; }
+    .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.12); border-top-color: #ffffff; animation: spin 0.8s linear infinite; display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status-text { font-size: 12px; opacity: 0.85; }
+    .upload-status { margin-top: 10px; }
+    input[type="file"] { display: none; }
+    .btn { border: none; border-radius: 999px; padding: 8px 16px; font-size: 13px; cursor: pointer; margin: 4px; min-width: 120px; transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s, background 0.2s, border-color 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, #4c6fff, #b372ff); color: #fff; box-shadow: 0 8px 22px rgba(40, 108, 255, 0.45); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.06); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); }
+    .btn-ghost { background: transparent; color: rgba(255, 255, 255, 0.8); border: 1px dashed rgba(255, 255, 255, 0.2); }
+    .btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; transform: none; }
+    .btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(40, 108, 255, 0.45); }
+    .btn:not(:disabled):active { transform: translateY(0); box-shadow: 0 4px 16px rgba(40, 108, 255, 0.4); }
+    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); margin-left: 8px; }
+    .pill-dot { width: 8px; height: 8px; border-radius: 50%; background: #4c6fff; }
+    .pill-dot.danger { background: #ff5c7b; }
+    .flex-gap { display: flex; gap: 12px; }
+    .col { display: flex; flex-direction: column; }
+    .w-60 { width: 60%; }
+    .w-40 { width: 40%; }
+    textarea { width: 100%; min-height: 260px; resize: vertical; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(5, 8, 22, 0.96); padding: 10px 12px; font-size: 13px; color: #f5f5f5; line-height: 1.5; white-space: pre-wrap; }
+    textarea:focus { outline: none; border-color: #4c6fff; box-shadow: 0 0 0 1px rgba(76, 111, 255, 0.5); }
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+    .field-item { padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); font-size: 12px; }
+    .field-label { opacity: 0.7; margin-bottom: 2px; }
+    .field-value { font-size: 13px; font-weight: 500; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+    .badge-success { background: rgba(36, 182, 126, 0.2); color: #52ffba; }
+    .badge-warning { background: rgba(255, 184, 0, 0.2); color: #ffdd80; }
+    .badge-danger { background: rgba(255, 92, 123, 0.2); color: #ff9fb3; }
+    .risk-list { list-style: none; margin-top: 10px; font-size: 13px; }
+    .risk-item { padding: 10px 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); margin-bottom: 8px; }
+    .risk-title { font-weight: 500; margin-bottom: 4px; }
+    .risk-meta { font-size: 12px; opacity: 0.8; margin-bottom: 4px; }
+    .risk-suggestion { font-size: 12px; opacity: 0.85; }
+    .report-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-top: 10px; }
+    .report-block-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+    .report-text { font-size: 13px; opacity: 0.9; line-height: 1.6; white-space: pre-wrap; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+    table th, table td { border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 8px; text-align: left; }
+    table th { background: rgba(255, 255, 255, 0.03); }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .chip { padding: 3px 10px; border-radius: 999px; font-size: 11px; background: rgba(255, 255, 255, 0.06); }
+    .text-muted { opacity: 0.7; font-size: 12px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .footer-credit { margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 11px; opacity: 0.6; line-height: 1.6; }
+    .divider { height: 1px; background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent); opacity: 0.35; margin: 14px 0; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; display: inline-block; transition: background 0.3s ease; }
+    .status-dot-inactive { background: #999999; }
+    .status-dot-ok { background: #52ffba; }
+    .status-dot-mid { background: #ffdd80; }
+    .status-dot-high { background: #ff5c7b; }
+    .score-number { font-size: 24px; font-weight: 600; }
+    .score-label { font-size: 12px; opacity: 0.7; }
+    .progress-bar { position: relative; width: 100%; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 6px; }
+    .progress-inner { position: absolute; top: 0; left: 0; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffdd80, #ff5c7b); width: 0; transition: width 0.4s ease-out; }
+    .header-right { display: flex; align-items: center; gap: 12px; font-size: 12px; opacity: 0.8; }
+    @media (max-width: 900px) { .layout { flex-direction: column; } aside { width: 100%; display: flex; overflow-x: auto; } .nav-list { display: flex; gap: 4px; margin-right: 12px; } main { padding: 16px; } .flex-gap { flex-direction: column; } .w-60, .w-40 { width: 100%; } .report-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="title">CatchRisk · 合同票据智能审核系统</div>
+      <div class="subtitle">针对贷前授信场景的贷前授信文档智能审查系统</div>
+    </div>
+    <div class="header-right">
+      <span>版本：<strong>正式版</strong></span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div>
+        <div class="nav-title">工作台</div>
+        <ul class="nav-list">
+          <li class="nav-item active" data-target="section-upload">
+            <span class="icon">📤</span> 上传与导入
+          </li>
+          <li class="nav-item" data-target="section-analysis">
+            <span class="icon">🧠</span> 合同识别与分析
+          </li>
+          <li class="nav-item" data-target="section-report">
+            <span class="icon">📑</span> 自动审查报告
+          </li>
+        </ul>
+      </div>
+      <div>
+        <div class="nav-title">状态</div>
+        <div class="text-muted">
+          <div class="mt-8">
+            <span class="status-dot status-dot-inactive" id="ocrDot"></span> OCR 引擎：处理中
+          </div>
+          <div class="mt-4">
+            <span class="status-dot status-dot-inactive" id="riskDot"></span> 风险规则库：LLM + 规则
+          </div>
+          <div class="mt-4">
+            <span class="status-dot status-dot-inactive" id="modelDot"></span> 模型：通过 HTTP API 调用
+          </div>
+        </div>
+      </div>
+      <div class="footer-credit">
+        Designed by Cache Team<br>
+        CatchRisk © 2025
+      </div>
+    </aside>
+
+    <main>
+      <!-- 上传页 -->
+      <section id="section-upload" class="section active">
+        <div class="section-header">
+          <div>
+            <div class="section-title">合同与票据上传</div>
+            <div class="section-desc">
+              支持 DOC / DOCX / PDF，后端自动完成文本抽取与风控分析。
+            </div>
+          </div>
+          <span class="tag">Step 1 · 文档导入</span>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">上传合同文件</div>
+              <div class="card-subtitle">适用于购销合同、租赁合同、贷款合同等标准文本</div>
+            </div>
+          </div>
+
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-title">将合同拖拽至此，或点击按钮选择文件</div>
+            <div class="upload-desc">
+              支持 DOC / DOCX / PDF，系统将自动识别文件类型并进行智能解析。
+            </div>
+
+            <input id="fileInput" type="file" accept=".doc,.docx,.pdf" />
+            <div>
+              <button class="btn btn-secondary" id="chooseFileBtn">选择本地文件</button>
+            </div>
+            <div class="mt-12 text-muted" id="fileNameLabel">当前未选择文件。</div>
+
+            <div class="upload-status" id="uploadStatus" style="display:none;">
+              <span class="spinner" id="uploadSpinner"></span>
+              <span class="status-text" id="uploadStatusText">等待上传</span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="mt-8">
+              <button class="btn btn-primary" id="startAnalyzeBtn">
+                开始智能审核
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 分析页 -->
+      <section id="section-analysis" class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">合同内容识别与风险分析</div>
+            <div class="section-desc">
+              左侧为自动识别的合同全文，右侧为关键要素与风险摘要，用于辅助风控人员快速判断。
+            </div>
+          </div>
+          <span class="tag">Step 2 · 模型分析</span>
+        </div>
+
+        <div class="card">
+          <div id="analysisStatus" style="display:none;margin-bottom:12px;">
+            <span class="spinner" id="analysisSpinner" style="display:inline-block;margin-right:8px;"></span>
+            <span class="status-text" id="analysisStatusText">分析进行中...</span>
+          </div>
+          <div class="flex-gap">
+            <div class="col w-60">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">文本解析结果</div>
+                  <div class="card-subtitle">采用银行级 OCR / 版面分析引擎，精准识别合同内容。</div>
+                </div>
+              </div>
+              <textarea id="contractTextArea" readonly></textarea>
+              <div class="mt-8 text-muted">
+                当前为后端解析得到的合同全文，后续可实现金额、期限、主体等不同字段着色显示。
+              </div>
+            </div>
+
+            <div class="col w-40">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">关键要素抽取</div>
+                  <div class="card-subtitle">由规则抽取 + 大模型抽取组合完成</div>
+                </div>
+              </div>
+              <div class="field-grid" id="fieldGrid"></div>
+
+              <div class="mt-16">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">风险评分</div>
+                    <div class="card-subtitle">仅作为风控辅助，不替代人工决策</div>
+                  </div>
+                  <span id="riskLevelBadge" class="badge badge-warning">风险等级</span>
+                </div>
+                <div class="mt-8" style="display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <div class="score-number" id="riskScore">-</div>
+                    <div class="score-label">综合风险得分 / 100</div>
+                  </div>
+                  <div style="flex:1;margin-left:14px;">
+                    <div class="progress-bar">
+                      <div id="riskProgress" class="progress-inner"></div>
+                    </div>
+                    <div class="mt-4 text-muted" id="riskSummaryLabel">
+                      风险分析结果将在此展示。
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-16">
+                <div class="card-title">高风险条款（模型识别结果）</div>
+                <ul class="risk-list" id="riskList"></ul>
+              </div>
+
+              <div class="mt-8">
+                <button class="btn btn-primary" id="toReportBtn">生成自动审查报告</button>
+                <button class="btn btn-secondary" id="backToUploadBtn">返回上传页</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 报告页 -->
+      <section id="section-report" class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">自动生成的《合同审查报告》</div>
+            <div class="section-desc">
+              报告可导出 PDF / JSON 并挂接至贷前风控系统，用于留痕与审计追踪。
+            </div>
+          </div>
+          <span class="tag">Step 3 · 报告输出</span>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">审查报告预览</div>
+              <div class="card-subtitle">生成专业审查报告，支持预览和导出。</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="status-inline" id="reportStatus" style="display:none;">
+                <span class="spinner" id="reportSpinner"></span>
+                <span class="status-text" id="reportStatusText">正在生成报告</span>
+              </div>
+              <button class="btn btn-primary" id="exportReportBtn">导出报告</button>
+            </div>
+          </div>
+
+          <div>
+            <textarea id="reportArea" readonly>目前没有生成报告。请先上传并分析文件。</textarea>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// 基本的前端交互：连接“选择文件”按钮与隐藏的 file input，显示文件名，并做简单的页面切换
+document.addEventListener('DOMContentLoaded', function () {
+  const fileInput = document.getElementById('fileInput');
+  const chooseFileBtn = document.getElementById('chooseFileBtn');
+  const fileNameLabel = document.getElementById('fileNameLabel');
+  const startAnalyzeBtn = document.getElementById('startAnalyzeBtn');
+  const contractTextArea = document.getElementById('contractTextArea');
+  const navItems = document.querySelectorAll('.nav-item');
+  const backToUploadBtn = document.getElementById('backToUploadBtn');
+  const toReportBtn = document.getElementById('toReportBtn');
+  const reportArea = document.getElementById('reportArea');
+  const exportReportBtn = document.getElementById('exportReportBtn');
+  const uploadSpinner = document.getElementById('uploadSpinner');
+  const uploadStatusText = document.getElementById('uploadStatusText');
+  const uploadStatus = document.getElementById('uploadStatus');
+  const reportSpinner = document.getElementById('reportSpinner');
+  const reportStatusText = document.getElementById('reportStatusText');
+  const reportStatus = document.getElementById('reportStatus');
+  const analysisSpinner = document.getElementById('analysisSpinner');
+  const analysisStatusText = document.getElementById('analysisStatusText');
+  const analysisStatus = document.getElementById('analysisStatus');
+
+  // 保存最近一次分析结果，供生成报告时使用
+  let lastAnalyzeResult = null;
+
+  // 获取状态指示器
+  const ocrDot = document.getElementById('ocrDot');
+  const riskDot = document.getElementById('riskDot');
+  const modelDot = document.getElementById('modelDot');
+
+  if (chooseFileBtn && fileInput) {
+    chooseFileBtn.addEventListener('click', function () { fileInput.click(); });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      // 清除上一次分析与报告（防止新文件混入旧结果）
+      try {
+        lastAnalyzeResult = null;
+        const riskListEl = document.getElementById('riskList'); if (riskListEl) riskListEl.innerHTML = '';
+        const riskScoreEl = document.getElementById('riskScore'); if (riskScoreEl) riskScoreEl.textContent = '-';
+        const riskLevelBadgeEl = document.getElementById('riskLevelBadge'); if (riskLevelBadgeEl) riskLevelBadgeEl.textContent = '风险等级';
+        const riskSummaryEl = document.getElementById('riskSummaryLabel'); if (riskSummaryEl) riskSummaryEl.textContent = '';
+        const reportAreaEl = document.getElementById('reportArea'); if (reportAreaEl) reportAreaEl.value = '目前没有生成报告。请先上传并分析文件。';
+        const contractTextEl = document.getElementById('contractTextArea'); if (contractTextEl) contractTextEl.value = '';
+        const riskProgressEl = document.getElementById('riskProgress'); if (riskProgressEl) riskProgressEl.style.width = '0%';
+        if (uploadStatus) { uploadStatus.style.display = 'none'; }
+        if (reportStatus) { reportStatus.style.display = 'none'; }
+        if (analysisStatus) { analysisStatus.style.display = 'none'; }
+      } catch (err) { console.warn('清除旧结果时出错', err); }
+
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        fileNameLabel.textContent = '当前未选择文件。';
+        startAnalyzeBtn.disabled = true;
+        return;
+      }
+      fileNameLabel.textContent = '已选择文件：' + file.name;
+      startAnalyzeBtn.disabled = false;
+
+      // 简单预览文本文件
+      if (file.type && file.type.startsWith('text') || /\.txt$/i.test(file.name)) {
+        const reader = new FileReader();
+        reader.onload = function (e) { contractTextArea.value = e.target.result || ''; };
+        reader.readAsText(file, 'utf-8');
+      } else {
+        contractTextArea.value = '已选择文件：' + file.name + '（非文本文件，无法预览）。';
+      }
+      // 显示已准备好上传状态
+      if (uploadStatus) { uploadStatus.style.display = 'flex'; uploadSpinner.style.display = 'none'; uploadStatusText.textContent = '已选择，准备上传'; }
+    });
+  }
+
+  // 拖拽上传支持：允许将文件拖入上传区域并触发选择逻辑
+  const uploadArea = document.getElementById('uploadArea');
+  if (uploadArea) {
+    // 阻止默认行为，避免浏览器打开文件
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+      uploadArea.addEventListener(evt, function (e) { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+
+    uploadArea.addEventListener('dragover', function () { uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragenter', function () { uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', function () { uploadArea.classList.remove('dragover'); });
+    uploadArea.addEventListener('drop', function (e) {
+      uploadArea.classList.remove('dragover');
+      const dt = e.dataTransfer;
+      if (!dt || !dt.files || dt.files.length === 0) return;
+      const file = dt.files[0];
+
+      try {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+      } catch (err) {
+        console.warn('无法通过 DataTransfer 设置文件到 input：', err);
+      }
+
+      // 触发 change 事件以复用已有逻辑
+      const ev = new Event('change', { bubbles: true });
+      fileInput.dispatchEvent(ev);
+
+      // 自动开始分析（拖拽后自动触发）
+      if (startAnalyzeBtn && !startAnalyzeBtn.disabled) {
+        // 小延迟以确保 change 处理完毕
+        setTimeout(() => { startAnalyzeBtn.click(); }, 150);
+      }
+    });
+  }
+
+  // 防止将文件拖到页面任意位置导致浏览器直接打开文件
+  ['dragover', 'drop'].forEach(evt => {
+    document.addEventListener(evt, function (e) { e.preventDefault(); e.stopPropagation(); }, false);
+  });
+
+  const BACKEND_BASE = 'http://127.0.0.1:8000';
+
+  // 侧栏导航点击绑定：让左侧菜单可以切换各个 section
+  if (navItems && navItems.length) {
+    navItems.forEach(function (item) {
+      item.addEventListener('click', function (e) {
+        const target = item.dataset && item.dataset.target;
+        if (target) showSection(target);
+      });
+    });
+  }
+
+  if (startAnalyzeBtn) {
+    startAnalyzeBtn.addEventListener('click', async function () {
+      const file = fileInput && fileInput.files && fileInput.files[0];
+      if (!file) { alert('请先选择一个文件。'); return; }
+
+      // 切换到分析页并显示加载状态
+      showSection('section-analysis');
+      contractTextArea.value = '正在上传并分析文件，请稍候...';
+      startAnalyzeBtn.disabled = true;
+
+      // 在分析页显示分析进度（而不是仅在上传页显示）
+      if (uploadStatus) { uploadStatus.style.display = 'none'; }
+      if (analysisStatus) { analysisStatus.style.display = 'flex'; analysisSpinner.style.display = 'inline-block'; analysisStatusText.textContent = '上传并分析中...'; }
+
+      // OCR 开始处理，圆圈变绿
+      if (ocrDot) { ocrDot.className = 'status-dot status-dot-ok'; }
+
+      try {
+        const form = new FormData();
+        form.append('file', file, file.name);
+
+        // 使用绝对 URL 以避免从 file:// 打开页面时的相对路径问题
+        const resp = await fetch(BACKEND_BASE + '/api/analyze-contract', {
+          method: 'POST',
+          body: form,
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(`后端返回错误 ${resp.status}: ${text}`);
+        }
+
+        const data = await resp.json();
+
+        // 填充 UI
+        contractTextArea.value = data.contract_text || '';
+        // 保存分析结果以便生成报告
+        lastAnalyzeResult = data;
+        document.getElementById('riskScore').textContent = data.risk_score ?? '-';
+        document.getElementById('riskLevelBadge').textContent = data.risk_level ?? '风险等级';
+        document.getElementById('riskSummaryLabel').textContent = data.risk_summary || '';
+
+        // 风险列表
+        const riskList = document.getElementById('riskList');
+        riskList.innerHTML = '';
+        (data.risks || []).forEach(function (r) {
+          const li = document.createElement('li');
+          li.className = 'risk-item';
+          li.innerHTML = `<div class="risk-title">${escapeHtml(r.title || '')}</div><div class="risk-meta">${escapeHtml(r.type || '')} · ${escapeHtml(r.severity || '')}</div><div class="risk-suggestion">${escapeHtml(r.suggestion || '')}</div>`;
+          riskList.appendChild(li);
+        });
+
+        // 分析返回后，风险规则库圆圈变黄
+        if (riskDot) { riskDot.className = 'status-dot status-dot-mid'; }
+
+        // 隐藏上传 spinner 并显示完成状态
+        if (analysisStatus) { analysisSpinner.style.display = 'none'; analysisStatusText.textContent = '分析完成'; setTimeout(() => { analysisStatus.style.display = 'none'; }, 1600); }
+
+      } catch (err) {
+        console.error(err);
+        // 更友好的错误提示，包含可能原因
+        contractTextArea.value = '调用后端分析失败：' + (err.message || err) + '\n\n可能原因：后端未运行、后端地址不正确、或浏览器跨域/文件来源（file://）被阻止。';
+        // 出错时重置 OCR 圆圈为灰色
+        if (ocrDot) { ocrDot.className = 'status-dot status-dot-inactive'; }
+        if (analysisStatus) { analysisSpinner.style.display = 'none'; analysisStatusText.textContent = '上传或分析失败'; setTimeout(() => { analysisStatus.style.display = 'none'; }, 2400); }
+      } finally {
+        startAnalyzeBtn.disabled = false;
+      }
+    });
+  }
+
+  function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  if (backToUploadBtn) backToUploadBtn.addEventListener('click', function () { showSection('section-upload'); });
+  if (toReportBtn) toReportBtn.addEventListener('click', async function () {
+    if (!lastAnalyzeResult) {
+      alert('请先完成分析再生成报告。');
+      return;
+    }
+
+    // 先跳转到报告页并显示生成中提示，然后异步请求后端生成报告
+    reportArea.value = '正在生成自动审查报告，请稍候...';
+    showSection('section-report');
+    toReportBtn.disabled = true;
+
+    // 显示报告生成 spinner
+    if (reportStatus) { reportStatus.style.display = 'flex'; reportSpinner.style.display = 'inline-block'; reportStatusText.textContent = '生成报告中...'; }
+
+    try {
+      // 构造请求体，后端期望的字段名要与 ReportRequest 匹配
+      const payload = {
+        fields: lastAnalyzeResult.fields || {},
+        risks: (lastAnalyzeResult.risks || []).map(r => ({
+          title: r.title || '',
+          type: r.type || '',
+          severity: r.severity || '',
+          clause: r.clause || '',
+          suggestion: r.suggestion || ''
+        })),
+        risk_score: Number(lastAnalyzeResult.risk_score || 0),
+        risk_level: lastAnalyzeResult.risk_level || '',
+        risk_summary: lastAnalyzeResult.risk_summary || '',
+        missing_clauses: lastAnalyzeResult.missing_clauses || [],
+        contract_text: lastAnalyzeResult.contract_text || ''
+      };
+
+      const resp = await fetch(BACKEND_BASE + '/api/generate-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`后端返回错误 ${resp.status}: ${text}`);
+      }
+
+      const json = await resp.json();
+      // 将返回的 summary 和 conclusion 拼成可读报告并替换生成中提示
+      const summary = json.summary || '';
+      const conclusion = json.conclusion || '';
+      reportArea.value = `自动审查报告\n\n来源文件：${fileInput.files[0] ? fileInput.files[0].name : '—'}\n\n《合同摘要》\n${summary}\n\n《整体风险结论》\n${conclusion}`;
+
+      // 生成报告完成后，模型圆圈变红
+      if (modelDot) { modelDot.className = 'status-dot status-dot-high'; }
+
+      // 隐藏报告 spinner 并显示完成提醒
+      if (reportStatus) { reportSpinner.style.display = 'none'; reportStatusText.textContent = '生成完成'; setTimeout(() => { reportStatus.style.display = 'none'; }, 1400); }
+
+    } catch (err) {
+      console.error(err);
+      reportArea.value = '生成报告失败：' + (err.message || err) + '\n\n请检查后端是否可用，或在控制台查看详细错误。';
+      if (reportStatus) { reportSpinner.style.display = 'none'; reportStatusText.textContent = '生成失败'; setTimeout(() => { reportStatus.style.display = 'none'; }, 2400); }
+    } finally {
+      toReportBtn.disabled = false;
+    }
+  });
+
+  if (exportReportBtn) {
+    exportReportBtn.addEventListener('click', function () {
+      const content = reportArea.value;
+      if (!content || content === '目前没有生成报告。请先上传并分析文件。') {
+        alert('请先生成报告后再导出。');
+        return;
+      }
+
+      // 创建 Blob 对象
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      
+      // 生成下载链接
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // 生成文件名：CatchRisk_合同审查报告_时间戳.txt
+      const now = new Date();
+      const timestamp = now.getFullYear() + 
+                       String(now.getMonth() + 1).padStart(2, '0') + 
+                       String(now.getDate()).padStart(2, '0') + '_' +
+                       String(now.getHours()).padStart(2, '0') + 
+                       String(now.getMinutes()).padStart(2, '0') + 
+                       String(now.getSeconds()).padStart(2, '0');
+      link.download = `CatchRisk_合同审查报告_${timestamp}.txt`;
+      
+      // 触发下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // 释放 URL
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(function (s) { s.classList.remove('active'); });
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+    navItems.forEach(function (item) { item.classList.toggle('active', item.dataset.target === id); });
+
+    // 当切换到非上传页时，确保上传区的状态提示被隐藏，避免残留显示
+    try {
+      if (id !== 'section-upload') {
+        const us = document.getElementById('uploadStatus');
+        if (us) { us.style.display = 'none'; }
+      }
+      if (id !== 'section-analysis') {
+        const as = document.getElementById('analysisStatus');
+        if (as) { as.style.display = 'none'; }
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  // 初始状态
+  if (startAnalyzeBtn) startAnalyzeBtn.disabled = true;
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+httpx
+python-multipart
+pydantic>=1.10,<3
+python-dotenv
+chardet
+pdfplumber
+python-docx
+pillow
+pytesseract
